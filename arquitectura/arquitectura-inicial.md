@@ -1,104 +1,69 @@
 # Arquitectura Inicial del Sistema
 
-## Diagrama de Arquitectura en Capas
+## Diagrama de Arquitectura
 
 ```mermaid
 flowchart TD
-%% =========================
-%% ACTORES
-%% =========================
-subgraph ACTORES ["ACTORES"]
-Cliente ["Cliente"]
-Seller ["Seller"]
-Admin ["Administrador"]
-end
+    %% --- ACTORES ---
+    subgraph ACTORES ["🎭 ACTORES"]
+        direction LR
+        Cliente["👤 Cliente"]
+        Seller["🏪 Seller"]
+        Admin["⚙️ Administrador"]
+    end
 
-%% =========================
-%% PRESENTACIÓN
-%% =========================
-subgraph PRESENTACION ["PRESENTACIÓN"]
-Web ["Aplicación Web → API REST"]
-end
+    %% --- CAPA DE PRESENTACIÓN ---
+    subgraph PRESENTACION ["💻 CAPA DE PRESENTACIÓN"]
+        Web["🌐 Aplicación Web & API REST"]
+    end
 
-%% =========================
-%% LÓGICA DE NEGOCIO
-%% =========================
-subgraph NEGOCIO ["LÓGICA DE NEGOCIO"]
-Usuarios ["Usuarios"]
-Sellers ["Sellers"]
-Catalogo ["Catálogo"]
-Carrito ["Carrito"]
-Pedidos ["Pedidos"]
-end
+    %% --- CAPA DE LÓGICA DE NEGOCIO ---
+    subgraph NEGOCIO ["🧠 CAPA DE LÓGICA DE NEGOCIO"]
+        direction LR
+        Usuarios["👥 Usuarios"]
+        Sellers["🏬 Sellers"]
+        Catalogo["📦 Catálogo"]
+        Carrito["🛒 Carrito"]
+        Pedidos["📋 Pedidos"]
+    end
 
-%% =========================
-%% DATOS
-%% =========================
-subgraph DATOS ["DATOS"]
-BD ["Base de datos"]
-end
+    %% --- CAPA DE DATOS ---
+    subgraph DATOS ["🗄️ CAPA DE DATOS"]
+        BD[("🛢️ Base de Datos Principal")]
+    end
 
-%% =========================
-%% SISTEMAS EXTERNOS
-%% =========================
-subgraph EXTERNOS ["SISTEMAS EXTERNOS"]
-Pago ["Pasarela de pago"]
-ERP ["ERP"]
-Envio ["Servicio de envío"]
-end
+    %% --- SISTEMAS EXTERNOS ---
+    subgraph EXTERNOS ["🌐 SISTEMAS EXTERNOS"]
+        direction LR
+        Pago["💳 Pasarela de Pago"]
+        ERP["📊 Sistema ERP"]
+        Envio["🚚 Servicio de Envío"]
+    end
 
-%% =========================
-%% FLUJO Y RELACIONES
-%% =========================
-ACTORES --> PRESENTACION
-PRESENTACION --> NEGOCIO
-NEGOCIO --> DATOS
-DATOS -->|"integraciones"| EXTERNOS
+    %% --- FLUJO PRINCIPAL ---
+    ACTORES --> PRESENTACION
+    PRESENTACION --> NEGOCIO
+    NEGOCIO --> DATOS
+    DATOS -. Integraciones .-> EXTERNOS
 
-%% ALINEACIÓN VISUAL HORIZONTAL
-Cliente ~~~ Seller
-Seller ~~~ Admin
-Usuarios ~~~ Sellers
-Sellers ~~~ Catalogo
-Catalogo ~~~ Carrito
-Carrito ~~~ Pedidos
-Pago ~~~ ERP
-ERP ~~~ Envio
+    %% --- ESTILOS DE COMPONENTES ---
+    classDef actorStyle fill:#2D3748,stroke:#A0AEC0,color:#FFFFFF,stroke-width:2px;
+    classDef presStyle fill:#1A365D,stroke:#3182CE,color:#FFFFFF,stroke-width:2px;
+    classDef busStyle fill:#1C4532,stroke:#38A169,color:#FFFFFF,stroke-width:2px;
+    classDef dataStyle fill:#744210,stroke:#D69E2E,color:#FFFFFF,stroke-width:2px;
+    classDef extStyle fill:#4A5568,stroke:#CBD5E0,color:#FFFFFF,stroke-width:2px;
 
-%% ESTILOS VISUALES
-style ACTORES fill:#222,stroke:#fff,stroke-width:2px,color:#fff
-style PRESENTACION fill:#222,stroke:#fff,stroke-width:2px,color:#fff
-style NEGOCIO fill:#222,stroke:#fff,stroke-width:2px,color:#fff
-style DATOS fill:#222,stroke:#fff,stroke-width:2px,color:#fff
-style EXTERNOS fill:#222,stroke:#fff,stroke-width:2px,color:#fff
-style Cliente fill:#222,stroke:#fff,color:#fff
-style Seller fill:#222,stroke:#fff,color:#fff
-style Admin fill:#222,stroke:#fff,color:#fff
-style Web fill:#222,stroke:#fff,color:#fff
-style Usuarios fill:#222,stroke:#fff,color:#fff
-style Sellers fill:#222,stroke:#fff,color:#fff
-style Catalogo fill:#222,stroke:#fff,color:#fff
-style Carrito fill:#222,stroke:#fff,color:#fff
-style Pedidos fill:#222,stroke:#fff,color:#fff
-style BD fill:#222,stroke:#fff,color:#fff
-style Pago fill:#222,stroke:#fff,color:#fff
-style ERP fill:#222,stroke:#fff,color:#fff
-style Envio fill:#222,stroke:#fff,color:#fff
+    class Cliente,Seller,Admin actorStyle;
+    class Web presStyle;
+    class Usuarios,Sellers,Catalogo,Carrito,Pedidos busStyle;
+    class BD dataStyle;
+    class Pago,ERP,Envio extStyle;
 ```
 
-## Descripción de la Arquitectura
+## Descripción
+La arquitectura inicial se organiza en tres capas principales:
+* **Presentación:** permite la interacción de los usuarios con el sistema mediante la aplicación web y la API REST.
+* **Lógica de negocio:** contiene los principales módulos responsables de las funcionalidades del sistema: usuarios, sellers, catálogo, carrito y pedidos.
+* **Datos:** permite almacenar y consultar la información mediante una base de datos.
 
-La solución propuesta para el **Marketplace de productos para mascotas** se estructura en un modelo tradicional de **tres capas** suplementado por un bloque de **sistemas externos**:
-
-1. **Capa de Presentación:**
-   - Interfaz gráfica con la que interactúan los actores (Cliente, Seller, Administrador)[cite: 2].
-   - Expone y consume servicios mediante una **API REST** desacoplada[cite: 2].
-
-2. **Capa de Lógica de Negocio:**
-   - Contiene las reglas del dominio distribuidas en los módulos principales: **Usuarios**, **Sellers**, **Catálogo**, **Carrito** y **Pedidos**[cite: 2].
-
-3. **Capa de Datos:**
-   - Gestiona el almacenamiento persistente mediante la **Base de Datos** principal[cite: 2].
-
-4. **Sistemas Externos:**
-   - Integración del módulo de Pedidos/Datos con la **Pasarela de Pago** (procesamiento de transacciones), **ERP** (inventario/facturación) y **Servicio de Envío** (logística de entrega)[cite: 2].
+Además, el módulo de **Pedidos** se integra con sistemas externos como la **pasarela de pago**, el **ERP** y el **servicio de envío**.
