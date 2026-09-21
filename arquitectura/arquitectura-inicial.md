@@ -2,8 +2,7 @@
 
 ## Diagrama de Arquitectura
 
-```
-mermaid
+```mermaid
 flowchart TD
 %% ACTORES
 subgraph ACTORES ["ACTORES"]
@@ -73,6 +72,8 @@ style BD fill:#222,stroke:#fff,color:#fff
 style Pago fill:#222,stroke:#fff,color:#fff
 style ERP fill:#222,stroke:#fff,color:#fff
 style Envio fill:#222,stroke:#fff,color:#fff
+```
+
 ## Descripción
 La arquitectura inicial se organiza en tres capas principales:
 - **Presentación:** permite la interacción de los usuarios con el sistema mediante la aplicación web y la API REST.
