@@ -1,22 +1,28 @@
 # Arquitectura Inicial del Sistema
 
-## Diagrama de Arquitectura
+## Diagrama de Arquitectura en Capas
 
 ```mermaid
 flowchart TD
+%% =========================
 %% ACTORES
+%% =========================
 subgraph ACTORES ["ACTORES"]
 Cliente ["Cliente"]
 Seller ["Seller"]
 Admin ["Administrador"]
 end
 
+%% =========================
 %% PRESENTACIÓN
+%% =========================
 subgraph PRESENTACION ["PRESENTACIÓN"]
 Web ["Aplicación Web → API REST"]
 end
 
+%% =========================
 %% LÓGICA DE NEGOCIO
+%% =========================
 subgraph NEGOCIO ["LÓGICA DE NEGOCIO"]
 Usuarios ["Usuarios"]
 Sellers ["Sellers"]
@@ -25,25 +31,31 @@ Carrito ["Carrito"]
 Pedidos ["Pedidos"]
 end
 
+%% =========================
 %% DATOS
+%% =========================
 subgraph DATOS ["DATOS"]
 BD ["Base de datos"]
 end
 
+%% =========================
 %% SISTEMAS EXTERNOS
+%% =========================
 subgraph EXTERNOS ["SISTEMAS EXTERNOS"]
 Pago ["Pasarela de pago"]
 ERP ["ERP"]
 Envio ["Servicio de envío"]
 end
 
-%% FLUJO
+%% =========================
+%% FLUJO Y RELACIONES
+%% =========================
 ACTORES --> PRESENTACION
 PRESENTACION --> NEGOCIO
 NEGOCIO --> DATOS
 DATOS -->|"integraciones"| EXTERNOS
 
-%% ALINEACIÓN
+%% ALINEACIÓN VISUAL HORIZONTAL
 Cliente ~~~ Seller
 Seller ~~~ Admin
 Usuarios ~~~ Sellers
@@ -53,7 +65,7 @@ Carrito ~~~ Pedidos
 Pago ~~~ ERP
 ERP ~~~ Envio
 
-%% ESTILOS
+%% ESTILOS VISUALES
 style ACTORES fill:#222,stroke:#fff,stroke-width:2px,color:#fff
 style PRESENTACION fill:#222,stroke:#fff,stroke-width:2px,color:#fff
 style NEGOCIO fill:#222,stroke:#fff,stroke-width:2px,color:#fff
@@ -74,10 +86,19 @@ style ERP fill:#222,stroke:#fff,color:#fff
 style Envio fill:#222,stroke:#fff,color:#fff
 ```
 
-## Descripción
-La arquitectura inicial se organiza en tres capas principales:
-- **Presentación:** permite la interacción de los usuarios con el sistema mediante la aplicación web y la API REST.
-- **Lógica de negocio:** contiene los principales módulos responsables de las funcionalidades del sistema: usuarios, sellers, catálogo, carrito y pedidos.
-- **Datos:** permite almacenar y consultar la información mediante una base de datos.
+## Descripción de la Arquitectura
 
-Además, el módulo de **Pedidos** se integra con sistemas externos como la **pasarela de pago**, el **ERP** y el **servicio de envío**.
+La solución propuesta para el **Marketplace de productos para mascotas** se estructura en un modelo tradicional de **tres capas** suplementado por un bloque de **sistemas externos**:
+
+1. **Capa de Presentación:**
+   - Interfaz gráfica con la que interactúan los actores (Cliente, Seller, Administrador)[cite: 2].
+   - Expone y consume servicios mediante una **API REST** desacoplada[cite: 2].
+
+2. **Capa de Lógica de Negocio:**
+   - Contiene las reglas del dominio distribuidas en los módulos principales: **Usuarios**, **Sellers**, **Catálogo**, **Carrito** y **Pedidos**[cite: 2].
+
+3. **Capa de Datos:**
+   - Gestiona el almacenamiento persistente mediante la **Base de Datos** principal[cite: 2].
+
+4. **Sistemas Externos:**
+   - Integración del módulo de Pedidos/Datos con la **Pasarela de Pago** (procesamiento de transacciones), **ERP** (inventario/facturación) y **Servicio de Envío** (logística de entrega)[cite: 2].
