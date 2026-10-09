@@ -63,8 +63,53 @@ src/
 ---
 
 ## 3. Capas del módulo y regla de dependencia
+graph TB
+    subgraph presentacion ["presentacion"]
+        direction TB
+        P1["order.controller.ts"]
+        P2["pedidos.routes.ts"]
+    end
 
-![Diagrama de paquetes del módulo Pedidos](/img/paquetes-modulo-pedidos.png)
+    subgraph aplicacion ["aplicacion"]
+        direction TB
+        A1["crear-pedido.use-case.ts"]
+        A2["crear-pedido.command.ts"]
+    end
+
+    subgraph dominio ["dominio"]
+        direction TB
+        D1["pedido.ts"]
+        D2["item-pedido.ts"]
+        D3["estado-pedido.ts"]
+        D4["order-repository.ts"]
+        D5["payment-port.ts"]
+        D6["resultado-cobro.ts"]
+    end
+
+    subgraph infraestructura ["infraestructura"]
+        direction TB
+        I1["postgres-order-repository.ts"]
+        I2["stripe-payment.adapter.ts"]
+        I3["paypal-payment.adapter.ts"]
+    end
+
+    subgraph root ["pedidos.module.ts"]
+        R1["Raíz de composición: crea los adaptadores concretos (infraestructura),<br/>los inyecta en el caso de uso y entrega el controlador ya construido a las rutas.<br/>Es el único archivo que conoce todas las capas."]
+    end
+
+    presentacion -.->|«import»| aplicacion
+    aplicacion -.->|«import»| dominio
+    infraestructura -.->|«implementa»| dominio
+
+    root -.->|«crea»| presentacion
+    root -.->|«crea»| aplicacion
+    root -.->|«crea»| infraestructura
+
+    style dominio fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style aplicacion fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style presentacion fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
+    style infraestructura fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    style root fill:#eceff1,stroke:#37474f,stroke-width:2px
 
 **Regla de dependencia:** el código solo puede importar hacia el centro (dominio). El dominio no conoce Express, PostgreSQL ni Stripe.
 
@@ -82,7 +127,101 @@ src/
 
 ## 4. Diagrama de clases
 
-![Diagrama de clases del módulo Pedidos](/img/clases-modulo-pedidos.png)
+classDiagram
+    namespace PRESENTACIÓN {
+        class OrderController {
+            -crearPedido: CrearPedidoUseCase
+            +crear(req, res): Promise~void~
+        }
+    }
+
+    namespace APLICACIÓN {
+        class CrearPedidoUseCase {
+            -orderRepository: OrderRepository
+            -paymentPort: PaymentPort
+            +ejecutar(cmd: CrearPedidoCommand): Promise~string~
+        }
+        class CrearPedidoCommand {
+            <<DTO>>
+            +clienteId: string
+            +items: ItemDTO[]
+            +tokenPago: string
+        }
+    }
+
+    namespace DOMINIO {
+        class Pedido {
+            <<entity>>
+            -id: string
+            -clienteId: string
+            -items: ItemPedido[]
+            -estado: EstadoPedido
+            -autorizacion?: string
+            +crear(clienteId, items)$ Pedido
+            +total(): number
+            +marcarPagado(autorizacion): void
+            +cancelar(): void
+        }
+        class ItemPedido {
+            <<value object>>
+            +productoId: string
+            +cantidad: number
+            +precioUnitario: number
+            +subtotal(): number
+        }
+        class EstadoPedido {
+            <<enumeration>>
+            PENDIENTE
+            PAGADO
+            DESPACHADO
+            ENTREGADO
+            CANCELADO
+        }
+        class OrderRepository {
+            <<interface>>
+            +guardar(pedido: Pedido): Promise~void~
+            +buscarPorId(id: string): Promise~Pedido | null~
+        }
+        class PaymentPort {
+            <<interface>>
+            +cobrar(monto: number, token: string): Promise~ResultadoCobro~
+        }
+        class ResultadoCobro {
+            <<DTO>>
+            +aprobado: boolean
+            +autorizacion: string
+            +motivoRechazo?: string
+        }
+    }
+
+    namespace INFRAESTRUCTURA {
+        class PostgresOrderRepository {
+            -db: Pool
+            +guardar(pedido: Pedido): Promise~void~
+            +buscarPorId(id: string): Promise~Pedido | null~
+        }
+        class StripePaymentAdapter {
+            -cliente: Stripe
+            +cobrar(monto, token): Promise~ResultadoCobro~
+        }
+        class PayPalPaymentAdapter {
+            -cliente: PayPal
+            +cobrar(monto, token): Promise~ResultadoCobro~
+        }
+    }
+
+    OrderController ..> CrearPedidoUseCase
+    OrderController ..> CrearPedidoCommand : «crea»
+    CrearPedidoUseCase --> OrderRepository
+    CrearPedidoUseCase --> PaymentPort
+    CrearPedidoUseCase ..> CrearPedidoCommand : «usa»
+    CrearPedidoUseCase ..> Pedido : «crea»
+    Pedido *-- "1..*" ItemPedido
+    Pedido --> EstadoPedido
+    PaymentPort ..> ResultadoCobro : «retorna»
+    PostgresOrderRepository ..|> OrderRepository
+    StripePaymentAdapter ..|> PaymentPort
+    PayPalPaymentAdapter ..|> PaymentPort
 
 ### 4.1 Notación UML utilizada
 
@@ -98,7 +237,41 @@ src/
 
 ## 5. Flujo de ejecución: crear pedido
 
-![Diagrama de secuencia de crear pedido](/img/secuencia-crear-pedido.png)
+sequenceDiagram
+    autonumber
+    actor Cliente as Cliente web
+    participant Ctrl as :OrderController
+    participant UC as :CrearPedidoUseCase
+    participant Ped as :Pedido
+    participant Pay as :PaymentPort<br/>StripePaymentAdapter
+    participant Pasarela as Pasarela de pago<br/>sistema externo
+    participant Repo as :OrderRepository<br/>PostgresOrderRepository
+    participant DB as PostgreSQL<br/>base de datos
+
+    Cliente->>Ctrl: 1. POST /api/v1/pedidos {clienteId, items, tokenPago}
+    Ctrl->>UC: 2. ejecutar(cmd)
+    UC->>Ped: 3. crear(clienteId, items)
+    Ped-->>UC: pedido [PENDIENTE]
+    UC->>Ped: 4. total()
+    Ped-->>UC: monto
+    UC->>Pay: 5. cobrar(monto, tokenPago)
+    Pay->>Pasarela: 6. Solicitud de cobro [HTTPS]
+    Pasarela-->>Pay: respuesta del proveedor
+    Pay-->>UC: ResultadoCobro
+
+    alt cobro.aprobado
+        UC->>Ped: 7. marcarPagado(autorizacion)
+        UC->>Repo: 8. guardar(pedido)
+        Repo->>DB: 9. INSERT pedido e ítems [SQL]
+        DB-->>Repo: ok
+        Repo-->>UC: ok
+        UC-->>Ctrl: pedidoId
+        Ctrl-->>Cliente: 10. 201 Created {pedidoId}
+    else pago rechazado
+        UC-->>Ctrl: 11. lanza PagoRechazadoError
+        Ctrl-->>Cliente: 12. 402 Payment Required {motivo}
+        Note over Ped,Repo: El pedido no se guarda si el pago es rechazado.<br/>El controlador traduce la excepción a un código HTTP.
+    end
 
 | Paso | Origen → destino | Acción | Capa |
 |---|---|---|---|
