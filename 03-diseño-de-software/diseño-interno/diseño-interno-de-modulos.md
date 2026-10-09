@@ -63,6 +63,7 @@ src/
 ---
 
 ## 3. Capas del módulo y regla de dependencia
+```mermaid
 graph TB
     subgraph presentacion ["presentacion"]
         direction TB
@@ -110,6 +111,7 @@ graph TB
     style presentacion fill:#e3f2fd,stroke:#1565c0,stroke-width:2px
     style infraestructura fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
     style root fill:#eceff1,stroke:#37474f,stroke-width:2px
+```
 
 **Regla de dependencia:** el código solo puede importar hacia el centro (dominio). El dominio no conoce Express, PostgreSQL ni Stripe.
 
@@ -127,9 +129,10 @@ graph TB
 
 ## 4. Diagrama de clases
 
+```mermaid
 classDiagram
     namespace PRESENTACIÓN {
-        class OrderController {
+        class CatalogoComponent {
             -crearPedido: CrearPedidoUseCase
             +crear(req, res): Promise~void~
         }
@@ -222,6 +225,7 @@ classDiagram
     PostgresOrderRepository ..|> OrderRepository
     StripePaymentAdapter ..|> PaymentPort
     PayPalPaymentAdapter ..|> PaymentPort
+```
 
 ### 4.1 Notación UML utilizada
 
@@ -237,6 +241,8 @@ classDiagram
 
 ## 5. Flujo de ejecución: crear pedido
 
+![Diagrama de secuencia de crear pedido]
+```mermaid
 sequenceDiagram
     autonumber
     actor Cliente as Cliente web
@@ -272,6 +278,7 @@ sequenceDiagram
         Ctrl-->>Cliente: 12. 402 Payment Required {motivo}
         Note over Ped,Repo: El pedido no se guarda si el pago es rechazado.<br/>El controlador traduce la excepción a un código HTTP.
     end
+```
 
 | Paso | Origen → destino | Acción | Capa |
 |---|---|---|---|
